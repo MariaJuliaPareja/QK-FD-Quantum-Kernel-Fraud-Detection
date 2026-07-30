@@ -1,18 +1,14 @@
-# QuFraud — Quantum Kernel SVM for Credit Card Fraud Detection
+# Quantum Kernel SVM for Credit Card Fraud Detection
 
 **Status:** MVP / proof-of-concept — undergraduate research project, QPeru
 
 A quantum machine learning experiment applying quantum kernel methods (Schuld & Killoran, 2019) to credit card fraud detection, benchmarked against a classical SVM baseline. Built as part of ongoing QML coursework and lightning talk material for the Leiden↔Chile Research Seminar (LCRS) 2026.
 
----
-
 ## Overview
 
 This project asks a narrow, honest question: **does mapping transaction data into a quantum feature space help a classifier separate fraud from legitimate transactions, compared to a classical kernel?**
 
-The short answer, on this run: yes, modestly — but on a small test set, and without cross-validation yet. See [Results](#results) and [Limitations](#limitations) below before drawing conclusions from this alone.
-
----
+The short answer, on this run: yes, modestly, but on a small test set, and without cross-validation yet. See [Results](#results) and [Limitations](#limitations) below before drawing conclusions from this alone.
 
 ## Dataset
 
@@ -23,31 +19,14 @@ The short answer, on this run: yes, modestly — but on a small test set, and wi
 - **Split:** 80/20 stratified → 160 train (80/80), 40 test (20/20)
 - **Scaling:** `MinMaxScaler` fit on train only, scaled to the embedding's required range; test set transformed with the same scaler (may slightly exceed range at the extremes — standard behavior, noted in case it affects the encoding circuit)
 
----
-
 ## Pipeline
 
-```
-Credit Card Fraud Dataset (Kaggle)
-        ↓
-Balanced Subset (100 fraud + 100 legit), top-4 PCA features
-        ↓
-Feature Scaling to embedding-compatible range
-        ↓
-Quantum Feature Map (fixed, untrained — see note below)
-        ↓  kernel matrix k(x,x') = |⟨φ(x)|φ(x')⟩|²
-Classical SVM — SVC(kernel='precomputed')
-        ↓
-Prediction on Test Set (n=40)
-        ↓
-Fraud / Not Fraud
-```
 
-> **Note:** the quantum kernel here is a *fixed* feature map (no trainable circuit parameters) — this is a quantum kernel method, not a variational quantum classifier. No VQA-based kernel optimization is performed in this version.
+![PipeLine](images/qsvm_pipeline.drawio.png)
+
+> **Note:** the quantum kernel here is a *fixed* feature map (no trainable circuit parameters) this is a quantum kernel method, not a variational quantum classifier. No VQA-based kernel optimization is performed in this version.
 
 Implemented in PennyLane. Classical baseline uses scikit-learn's `SVC(kernel='rbf')` on the identical split for direct comparison.
-
----
 
 ## Kernel Concentration — a diagnosis, not a footnote
 
@@ -55,9 +34,10 @@ The first working kernel (`IQPEmbedding`, 2 repeats, scaled to full rotation ran
 
 ![Quantum Kernel Matrix — concentrated](images/kernel_matrix.png)
 
-This is a known failure mode for expressive quantum kernels — related to the barren plateau phenomenon, but affecting kernel values instead of gradients (see Thanasilp et al., Kübler et al.).
+This is a known failure mode for expressive quantum kernels, related to the barren plateau phenomenon, but affecting kernel values instead of gradients (see Thanasilp et al., Kübler et al.).
 
 **Diagnostics tested** (off-diagonal mean ± std, higher = healthier):
+![Quantum Kernel Matrix Concentration Comparition](images/kernel_concentration_comparison.png)
 
 | Variant | Config | Off-diag mean ± std |
 |---|---|---|
@@ -70,11 +50,9 @@ This is a known failure mode for expressive quantum kernels — related to the b
 - Reducing repetitions alone (Var 1) barely moved the needle — circuit depth was not the dominant cause.
 - Narrowing the encoding range (Var 2) helped substantially *even with entanglement still present*.
 - Removing entanglement entirely (Var 3, plain `AngleEmbedding`) gave the strongest improvement of the three.
-- Since Var 2 and Var 3 each change a different single factor and both help, the concentration here isn't attributable to one isolated cause — both the entangling structure and the encoding range contribute, with the entangling embedding appearing to be the larger single lever of the two tested.
+- Since Var 2 and Var 3 each change a different single factor and both help, the concentration here isn't attributable to one isolated cause: both the entangling structure and the encoding range contribute, with the entangling embedding appearing to be the larger single lever of the two tested.
 
 The `AngleEmbedding` configuration (Var 3) was used for the classifier below.
-
----
 
 ## Results
 
@@ -112,6 +90,8 @@ The `AngleEmbedding` configuration (Var 3) was used for the classifier below.
 | F1 | 0.811 | 0.872 |
 | Recall (fraud) | 75.0% | 85.0% |
 
+![Metric Comparition between classical RBF and Quantum QSVM](images/results.png)
+
 *n = 40 test samples — single split, not cross-validated.*
 
 For reference, a 2D visualization of the classical SVM decision boundary (2 of the 4 PCA components, for visualization only — the actual model uses all 4):
@@ -133,11 +113,11 @@ For reference, a 2D visualization of the classical SVM decision boundary (2 of t
 
 - [ ] 5-fold (or 10-fold) cross-validation, comparing classical RBF vs. quantum kernel SVM, reporting mean ± std across folds
 - [ ] Test the untried combination: reps=1 + narrowed range together (may combine the benefits of Var 1 and Var 2 without fully dropping entanglement)
-- [ ] Extend from classification (QSVM) toward the author's thesis direction: combinatorial optimization via QAOA/QUBO (GPS/MPF vs. QUBO formulations for TSP)
+- [ ] Extend from classification (QSVM) toward my thesis direction: combinatorial optimization via QAOA/QUBO (GPS/MPF vs. QUBO formulations for TSP)
 
 ---
 
-## What This MVP Is Not (Yet) — Toward a More Complex Run
+## What This MVP Is Not (Yet) - Toward a More Complex Run
 
 This is a deliberately small proof of concept: 4 qubits, 160 training samples, one train/test split, run entirely on a classical simulator. To call this a genuinely complex QML experiment rather than a demo, several things would need to change:
 
@@ -174,4 +154,4 @@ None of this needs to happen before the lightning talk or this MVP write-up — 
 
 ---
 
-*Part of QPeru's ongoing quantum machine learning research track. Author: Maju.*
+*Author: Maria Julia Pareja Abarca*
