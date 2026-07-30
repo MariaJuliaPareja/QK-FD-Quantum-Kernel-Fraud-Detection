@@ -5,9 +5,16 @@ import sklearn
 import pandas
 import matplotlib
 
+from data_loader import load_creditcard_data, summarize
+
 print("qiskit:", qiskit.__version__)
 print("qiskit-machine-learning:", qiskit_machine_learning.__version__)
 print("qiskit-aer:", qiskit_aer.__version__)
 print("scikit-learn:", sklearn.__version__)
 print("pandas:", pandas.__version__)
 print("matplotlib:", matplotlib.__version__)
+
+print()
+print("Loading creditcard fraud dataset...")
+df = load_creditcard_data()
+summarize(df)
